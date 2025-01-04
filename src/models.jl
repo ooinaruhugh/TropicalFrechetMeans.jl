@@ -61,7 +61,7 @@ Prepares a JuMP model for finding one tropical Fréchet mean of a given sample.
 """
 function tropical_frechet_model(::Type{Opt}, sample; power=2) where {Opt<:MathOptInterface.AbstractOptimizer}
     dim = length(sample[1])
-    alphas = trop_ball_facets(dim)
+    alphas = tropical_ball_facets(dim)
     return polyhedral_frechet_model(Opt, sample, alphas; power=power)
 end
 

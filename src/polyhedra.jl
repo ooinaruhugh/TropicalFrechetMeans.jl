@@ -1,6 +1,7 @@
 using MathOptInterface
 using LinearAlgebra
-using JuMP, Polyhedra
+using JuMP, Ipopt
+using Polyhedra
 
 """
 Find the set of polyhedral Fréchet means of a given sample.
@@ -62,6 +63,10 @@ function polyhedral_frechet_set(::Type{Opt}, ::Type{Lib}, sample, alphas; power=
     end
 end
 
+function polyhedral_frechet_set(::Type{Opt}, sample, alphas; power=2, rep=:polyhedron, tol=1e-3) where {Opt<:MathOptInterface.AbstractOptimizer}
+    Lib = default_library(length(sample |> first), eltype(sample |> first)) |> typeof
+    return polyhedral_frechet_set(Opt, Lib, sample, alphas; power=power, rep=rep, tol=tol)
+end
 
 """
     tropical_frechet_set(sample; power=2, rep=:polyhedron, tol=1e-3)
@@ -72,6 +77,20 @@ The rows of `alphas` are the facet normals scaled to α⋅x = 1.
 """
 function tropical_frechet_set(::Type{Opt}, ::Type{Lib}, sample; power=2, rep=:polyhedron, tol=1e-3) where {Opt<:MathOptInterface.AbstractOptimizer,Lib<:Polyhedra.Library}
     dim = length(sample[1])
-    alphas = trop_ball_facets(dim)
+    alphas = tropical_ball_facets(dim)
     return polyhedral_frechet_set(Opt, Lib, sample, alphas; power=power, rep=rep, tol=tol)
 end
+
+function tropical_frechet_set(::Type{Opt}, sample; power=2, rep=:polyhedron, tol=1e-3) where {Opt<:MathOptInterface.AbstractOptimizer}
+    Lib = default_library(length(sample |> first), eltype(sample |> first)) |> typeof
+    return tropical_frechet_set(Opt, Lib, sample; power=power, rep=rep, tol=tol)
+end
+# tropical_frechet_set(sample; power=2, rep=:polyhedron, tol=1e-3) = tropical_frechet_set(Clarabel.Optimizer, sample; power=power, rep=rep, tol=tol)
+
+function tropical_ball(::Type{Lib}, center::Vector{T}, radius::T) where {T<:Real, Lib<:Polyhedra.Library}
+    facets = tropical_ball_facets(eltype(center), length(center))
+    b = radius .+ facets * center
+
+    return polyhedron(hrep(facets, b), Lib(:exact))
+end
+tropical_ball(center::Vector{T}, radius::T) where {T<:Real} = tropical_ball(default_library(length(center), T) |> typeof, center, radius)

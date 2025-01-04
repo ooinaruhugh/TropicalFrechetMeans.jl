@@ -59,4 +59,4 @@ function tropical_ball_facets(::Type{T}, n::Int64) where {T<:Real}
     end
     return result
 end
-tropical_ball_facets(n::Int64) = trop_ball_facets(Rational{Int64}, n)
+tropical_ball_facets(n::Int64) = tropical_ball_facets(Rational{Int64}, n)
