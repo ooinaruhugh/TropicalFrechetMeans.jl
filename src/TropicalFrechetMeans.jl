@@ -9,7 +9,7 @@ export sum_of_poly_dist
 export tropical_distance
 export sum_of_trop_dist
 
-export trop_ball_facets
+export tropical_ball_facets
 
 export polyhedral_frechet_model
 export polyhedral_frechet_mean

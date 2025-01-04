@@ -45,7 +45,7 @@ end
 
 Computes the facet normals in n dimensions for a tropical unit ball.
 """
-function trop_ball_facets(::Type{T}, n::Int64) where {T<:Real}
+function tropical_ball_facets(::Type{T}, n::Int64) where {T<:Real}
     result = zeros(T, n * (n - 1), n)
     k = 1
     for i = 1:n
@@ -59,25 +59,4 @@ function trop_ball_facets(::Type{T}, n::Int64) where {T<:Real}
     end
     return result
 end
-trop_ball_facets(n::Int64) = trop_ball_facets(Rational{Int64}, n)
-
-
-
-
-# function exact_poly_frechet(::Type{T}, sample, alphas; power=2) where {T<:MathOptInterface.AbstractOptimizer}
-#     P = polyhedral_frechet_set(T, sample, alphas; power=power)
-    
-#     return points(P) |> collect |> rand
-# end
-
-# function numerical_poly_frechet(::Type{T}, sample, alphas; power=2) where {T<:MathOptInterface.AbstractOptimizer}
-#     model, x = polyhedral_frechet_model(T, sample, alphas, power=power)
-    
-#     @debug "\nOptimising..."
-    
-#     optimize!(model)
-#     minimiser = value.(x)
-    
-#     return minimiser
-# end
-
+tropical_ball_facets(n::Int64) = trop_ball_facets(Rational{Int64}, n)

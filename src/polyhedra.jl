@@ -2,7 +2,6 @@ using MathOptInterface
 using LinearAlgebra
 using JuMP, Polyhedra
 
-# poly_frechet_set(sample, alphas; power=2, rep=:polyhedron, tol=1e-3) = poly_frechet_set(CDDLib.Library, sample, alphas; power=power, rep=rep, tol=tol)
 """
 Find the set of polyhedral Fréchet means of a given sample.
 The rows of `alphas` are the facet normals scaled to α⋅x = 1.
