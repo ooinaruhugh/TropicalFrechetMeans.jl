@@ -1,6 +1,6 @@
 using MathOptInterface
 using LinearAlgebra
-using JuMP, Ipopt
+using JuMP
 using Polyhedra
 
 """
@@ -9,64 +9,42 @@ The rows of `alphas` are the facet normals scaled to α⋅x = 1.
 `power` gives the exponent of the distance before taking the sum.
 `rep` is either "vrep" or "hrep" -- returning either vertices or halfspaces.
 """
-function polyhedral_frechet_set(::Type{Opt}, ::Type{Lib}, sample, alphas; power=2, rep=:polyhedron, tol=1e-3) where {Opt<:MathOptInterface.AbstractOptimizer,Lib<:Polyhedra.Library}
-    num_facets = size(alphas)[1]
-    
-    # Compute one Fréchet mean
-    FM = polyhedral_frechet_mean(Opt, sample, alphas, power=power)
-    
+function polyhedral_frechet_set(::Type{Opt}, lib::Lib, sample, alphas; power=2, tol=1e-3) where {
+    Opt<:MathOptInterface.AbstractOptimizer,
+    Lib<:Polyhedra.Library
+}
+    FM = if tol > 0 
+        sample = map(sample) do pt; rationalize.(pt; tol=tol) end
+        pt = polyhedral_frechet_mean(Opt, sample, alphas; power=power)
+        rationalize.(pt; tol=tol)
+    else 
+        polyhedral_frechet_mean(Opt, sample, alphas; power=power)
+    end
     @debug "Frechet mean found: $(FM)"
-    
-    # Rationalise all coordinates
-    rat_alphas = rationalize.(alphas, tol=tol)
-    rat_sample = [rationalize.(pt, tol=tol) for pt in sample]
-    rat_mean = rationalize.(FM, tol=tol)
-    
-    distances = [polyhedral_distance(rat_mean, pt, alphas) for pt in rat_sample]
-    
-    Amat = vcat(rat_alphas, -rat_alphas)
-    bval1 = Rational{Int64}[]
-    
-    evals = rat_alphas * hcat([rat_mean - pt for pt in rat_sample]...)
-    for k in 1:length(rat_sample)
-        evals[:,k] .-= distances[k]
+
+    B = map(sample) do pt 
+        d = polyhedral_distance(FM, pt, alphas)
+        polyhedral_ball(lib, pt, alphas, d)
     end
     
-    progress = 0
-    total = num_facets
-    
-    for k = 1:num_facets
-        
-        greatest_nonpos = argmax([x > 0 ? -Inf : x for x in evals[k,:]])
-        push!(bval1, dot(rat_alphas[k,:], rat_sample[greatest_nonpos]) + 
-            distances[greatest_nonpos])
-        
-        progress += 1
-        @debug "Removing redundant half-spaces: $(round(progress/total * 100, digits=3))%   \r"    
-    end
-    
-    @debug "\nFinding defining facets..."
-    
-    poly = polyhedron(hrep(rat_alphas, bval1), Lib(:exact))
-    # poly = polyhedron(hrep(Amat, [bval1...,bval1...]), Lib(:exact))
-    removehredundancy!(poly)
-    
-    if rep == :hrep
-        @debug "Finding facets..."
-        return hrep(poly)
-    elseif rep == :vrep
-        @debug "Finding vertices..."
-        return vrep(poly)
-    else
-        @debug "Defaulting to polyhedron."
-        return poly
-    end
+    return intersect(B...)
+end
+function polyhedral_frechet_set(::Type{Opt}, sample::Vector{Vector{T}}, alphas::Matrix{T}; power=2, rep=:polyhedron, tol=1e-3) where {
+    Opt<:MathOptInterface.AbstractOptimizer, 
+    T<:Real
+}
+    n = length(sample |> first)
+    lib = default_library(n, T)
+
+    return polyhedral_frechet_set(Opt, lib, sample, alphas; power=power, tol=tol)
 end
 
-function polyhedral_frechet_set(::Type{Opt}, sample, alphas; power=2, rep=:polyhedron, tol=1e-3) where {Opt<:MathOptInterface.AbstractOptimizer}
-    Lib = default_library(length(sample |> first), eltype(sample |> first)) |> typeof
-    return polyhedral_frechet_set(Opt, Lib, sample, alphas; power=power, rep=rep, tol=tol)
+function polyhedral_ball(lib::Lib, center, alphas, radius::T) where {T<:Real, Lib<:Polyhedra.Library}
+    b = radius .+ alphas * center
+
+    return polyhedron(hrep(alphas, b), lib)
 end
+
 
 """
     tropical_frechet_set(sample; power=2, rep=:polyhedron, tol=1e-3)
@@ -75,22 +53,46 @@ Find one polyhedral Fréchet mean of a given sample.
 The rows of `alphas` are the facet normals scaled to α⋅x = 1.
 `power` gives the exponent of the distance before taking the sum.
 """
-function tropical_frechet_set(::Type{Opt}, ::Type{Lib}, sample; power=2, rep=:polyhedron, tol=1e-3) where {Opt<:MathOptInterface.AbstractOptimizer,Lib<:Polyhedra.Library}
-    dim = length(sample[1])
-    alphas = tropical_ball_facets(dim)
-    return polyhedral_frechet_set(Opt, Lib, sample, alphas; power=power, rep=rep, tol=tol)
+function tropical_frechet_set(::Type{Opt}, lib::Lib, sample::Vector{Vector{T}}; power=2, tol=1e-3) where {
+    Opt<:MathOptInterface.AbstractOptimizer, Lib<:Polyhedra.Library, T<:Real
+}
+    n = length(sample[1])
+    alphas = tropical_ball_facets(n)
+
+    P = polyhedral_frechet_set(Opt, lib, sample, alphas; power=power, tol=tol)
+    return tropical_remove_redundant_halfspaces!(P)
 end
 
-function tropical_frechet_set(::Type{Opt}, sample; power=2, rep=:polyhedron, tol=1e-3) where {Opt<:MathOptInterface.AbstractOptimizer}
-    Lib = default_library(length(sample |> first), eltype(sample |> first)) |> typeof
-    return tropical_frechet_set(Opt, Lib, sample; power=power, rep=rep, tol=tol)
+function tropical_frechet_set(::Type{Opt}, sample::Vector{Vector{T}}; power=2, tol=1e-3) where {
+    Opt<:MathOptInterface.AbstractOptimizer, T<:Real
+}
+    n = length(sample[1])
+    lib = default_library(n, T)
+    return tropical_frechet_set(Opt, lib, sample; power=power, tol=tol)
 end
 # tropical_frechet_set(sample; power=2, rep=:polyhedron, tol=1e-3) = tropical_frechet_set(Clarabel.Optimizer, sample; power=power, rep=rep, tol=tol)
 
-function tropical_ball(::Type{Lib}, center::Vector{T}, radius::T) where {T<:Real, Lib<:Polyhedra.Library}
-    facets = tropical_ball_facets(eltype(center), length(center))
-    b = radius .+ facets * center
+function tropical_remove_redundant_halfspaces!(P::Polyhedron{T}) where T<:Real
+    H = hrep(P)
+    hs = [(h.a, h.β) for h in halfspaces(H)]
+    hp = hyperplanes(H)
 
-    return polyhedron(hrep(facets, b), Lib(:exact))
+    bdict = Dict{Vector{T}, T}()
+    
+    for (a, β) in hs
+        if a in keys(bdict)
+            bdict[a] = min(bdict[a], β)
+        else
+            bdict[a] = β
+        end
+    end
+
+    f = [HalfSpace(a, β) for (a, β) in bdict]
+    Hnew = hrep(hp, f)
+
+    return polyhedron(Hnew, library(P))
 end
-tropical_ball(center::Vector{T}, radius::T) where {T<:Real} = tropical_ball(default_library(length(center), T) |> typeof, center, radius)
+
+tropical_ball(lib::Lib, center::Vector{T}, radius::R) where {T<:Real, R<:Real, Lib<:Polyhedra.Library} =
+    polyhedral_ball(lib, center, tropical_ball_facets(T, length(center)), radius)
+tropical_ball(center::Vector{T}, radius::R) where {T<:Real, R<:Real} = tropical_ball(default_library(length(center), T), center, radius)

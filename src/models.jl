@@ -1,4 +1,4 @@
-using MathOptInterface, JuMP
+using MathOptInterface, JuMP, Clarabel
 
 """
     polyhedral_frechet_model(::Type{Opt}, sample, alphas; power=2) where {Opt<:MathOptInterface.AbstractOptimizer}
@@ -34,6 +34,7 @@ function polyhedral_frechet_model(::Type{Opt}, sample, alphas; power=2) where {O
 
     return model, x
 end
+
 
 """
     polyhedral_frechet_mean(::Type{Opt}, sample, alphas; power=2) where {Opt<:MathOptInterface.AbstractOptimizer}
