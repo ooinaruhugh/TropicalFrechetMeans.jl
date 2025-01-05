@@ -34,7 +34,7 @@ function polyhedral_frechet_model(::Type{Opt}, sample, alphas; power=2) where {O
 
     return model, x
 end
-
+polyhedral_frechet_model(sample, alphas; power=2) =polyhedral_frechet_model(Clarabel.Optimizer, sample, alphas; power=power)
 
 """
     polyhedral_frechet_mean(::Type{Opt}, sample, alphas; power=2) where {Opt<:MathOptInterface.AbstractOptimizer}
@@ -53,6 +53,7 @@ function polyhedral_frechet_mean(::Type{Opt}, sample, alphas; power=2) where {Op
     
     return minimiser
 end
+polyhedral_frechet_mean(sample, alphas; power=2) = polyhedral_frechet_mean(Clarabel.Optimizer, sample, alphas; power=power)
 
 """
     tropical_frechet_model(::Type{Opt}, sample; power=2) where {Opt<:MathOptInterface.AbstractOptimizer}

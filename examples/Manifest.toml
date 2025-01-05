@@ -1380,15 +1380,10 @@ uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
 version = "0.11.3"
 
 [[deps.TropicalFrechetMeans]]
-deps = ["JuMP", "LinearAlgebra", "MathOptInterface", "Polyhedra"]
+deps = ["CDDLib", "Clarabel", "JuMP", "LinearAlgebra", "MathOptInterface", "Polyhedra"]
 path = ".."
 uuid = "b8a54ddf-bfb8-412d-8fc8-49b10a28cecf"
 version = "0.1.0"
-weakdeps = ["CDDLib", "Clarabel"]
-
-    [deps.TropicalFrechetMeans.extensions]
-    CDDLibExt = "CDDLib"
-    ClarabelExt = "Clarabel"
 
 [[deps.Twiddle]]
 git-tree-sha1 = "29509c4862bfb5da9e76eb6937125ab93986270a"

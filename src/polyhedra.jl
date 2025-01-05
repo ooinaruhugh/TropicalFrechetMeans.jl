@@ -1,7 +1,8 @@
-using MathOptInterface
 using LinearAlgebra
+using MathOptInterface
 using JuMP
 using Polyhedra
+using Clarabel, CDDLib
 
 """
 Find the set of polyhedral Fréchet means of a given sample.
@@ -38,6 +39,15 @@ function polyhedral_frechet_set(::Type{Opt}, sample::Vector{Vector{T}}, alphas::
 
     return polyhedral_frechet_set(Opt, lib, sample, alphas; power=power, tol=tol)
 end
+function TropicalFrechetMeans.polyhedral_frechet_set(lib::Lib, sample, alphas; power=2, tol=1e-3) where {
+    Lib<:Polyhedra.Library
+}
+    H = polyhedral_frechet_set(Clarabel.Optimizer, lib, sample, alphas; power=power, tol=tol) |> hrep
+    redH = removehredundancy(H, Clarabel.Optimizer)
+    return polyhedron(redH, lib)
+end
+polyhedral_frechet_set(sample, alphas; power=2, tol=1e-3) = polyhedral_frechet_set(CDDLib.Library(:exact), sample, alphas; power=power, tol=tol)
+
 
 function polyhedral_ball(lib::Lib, center, alphas, radius::T) where {T<:Real, Lib<:Polyhedra.Library}
     b = radius .+ alphas * center
@@ -70,7 +80,14 @@ function tropical_frechet_set(::Type{Opt}, sample::Vector{Vector{T}}; power=2, t
     lib = default_library(n, T)
     return tropical_frechet_set(Opt, lib, sample; power=power, tol=tol)
 end
-# tropical_frechet_set(sample; power=2, rep=:polyhedron, tol=1e-3) = tropical_frechet_set(Clarabel.Optimizer, sample; power=power, rep=rep, tol=tol)
+function TropicalFrechetMeans.tropical_frechet_set(lib::Lib, sample::Vector{Vector{T}}; power=2, tol=1e-3) where {
+    Lib<:Polyhedra.Library, T<:Real
+}
+    H = tropical_frechet_set(Clarabel.Optimizer, lib, sample; power=power, tol=tol) |> hrep
+    redH = removehredundancy(H, Clarabel.Optimizer)
+    return polyhedron(redH, lib)
+end
+tropical_frechet_set(sample; power=2, tol=1e-3) = tropical_frechet_set(CDDLib.Library(:exact), sample, alphas; power=power, tol=tol)
 
 function tropical_remove_redundant_halfspaces!(P::Polyhedron{T}) where T<:Real
     H = hrep(P)
