@@ -84,3 +84,5 @@ function tropical_frechet_mean(::Type{Opt}, sample; power=2) where {Opt<:MathOpt
     
     return minimiser
 end
+
+tropical_frechet_mean(sample; power=2) = tropical_frechet_mean(Clarabel.Optimizer, sample; power=power) 

@@ -87,7 +87,7 @@ function TropicalFrechetMeans.tropical_frechet_set(lib::Lib, sample::Vector{Vect
     redH = removehredundancy(H, Clarabel.Optimizer)
     return polyhedron(redH, lib)
 end
-tropical_frechet_set(sample; power=2, tol=1e-3) = tropical_frechet_set(CDDLib.Library(:exact), sample, alphas; power=power, tol=tol)
+tropical_frechet_set(sample; power=2, tol=1e-3) = tropical_frechet_set(CDDLib.Library(:exact), sample; power=power, tol=tol)
 
 function tropical_remove_redundant_halfspaces!(P::Polyhedron{T}) where T<:Real
     H = hrep(P)
