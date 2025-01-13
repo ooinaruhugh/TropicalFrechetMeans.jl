@@ -39,7 +39,7 @@ function polyhedral_frechet_set(::Type{Opt}, sample::Vector{Vector{T}}, alphas::
 
     return polyhedral_frechet_set(Opt, lib, sample, alphas; power=power, tol=tol)
 end
-function TropicalFrechetMeans.polyhedral_frechet_set(lib::Lib, sample, alphas; power=2, tol=1e-3) where {
+function polyhedral_frechet_set(lib::Lib, sample, alphas; power=2, tol=1e-3) where {
     Lib<:Polyhedra.Library
 }
     H = polyhedral_frechet_set(Clarabel.Optimizer, lib, sample, alphas; power=power, tol=tol) |> hrep
@@ -80,7 +80,7 @@ function tropical_frechet_set(::Type{Opt}, sample::Vector{Vector{T}}; power=2, t
     lib = default_library(n, T)
     return tropical_frechet_set(Opt, lib, sample; power=power, tol=tol)
 end
-function TropicalFrechetMeans.tropical_frechet_set(lib::Lib, sample::Vector{Vector{T}}; power=2, tol=1e-3) where {
+function tropical_frechet_set(lib::Lib, sample::Vector{Vector{T}}; power=2, tol=1e-3) where {
     Lib<:Polyhedra.Library, T<:Real
 }
     H = tropical_frechet_set(Clarabel.Optimizer, lib, sample; power=power, tol=tol) |> hrep
