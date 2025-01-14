@@ -1,4 +1,4 @@
-using Polyhedron
+using Polyhedra
 using TropicalFrechetMeans
 
 function trop_normalize(x)
