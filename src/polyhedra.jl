@@ -72,27 +72,7 @@ The rows of `alphas` are the facet normals scaled to α⋅x = 1.
 function tropical_frechet_set(::Type{Opt}, lib::Lib, sample::Vector{Vector{T}}; power=2, tol=1e-3) where {
     Opt<:MathOptInterface.AbstractOptimizer, Lib<:Polyhedra.Library, T<:Real
 }
-    n = length(sample[1])
-    alphas = tropical_ball_facets(n)
-
-    FM = tropical_frechet_mean(Opt, sample)#; tol=tol)
-    
-    b = foldl(sample; init=fill(Inf, size(alphas,1))) do acc,pt
-      r = tropical_distance(FM, pt)
-
-      min.(acc,r .+ alphas * pt)
-    end
-
-    if tol > 0
-      b = rationalize.(b; tol=tol)
-    end
-
-    return polyhedron(hrep(alphas, b), lib)
-end
-
-function tropical_frechet_set(::Type{Opt}, lib::Lib, sample::Vector{Vector{T}}; power=2, tol=1e-3) where {
-    Opt<:MathOptInterface.AbstractOptimizer, Lib<:Polyhedra.Library, T<:Real
-}
+  n = length(sample |> first)
   alphas = tropical_ball_facets(n)
 
   return polyhedral_frechet_set(Opt, lib, sample, alphas; power=power, tol=tol)
