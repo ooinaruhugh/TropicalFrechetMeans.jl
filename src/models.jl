@@ -11,12 +11,11 @@ function polyhedral_frechet_model(::Type{Opt}, sample, alphas; power=2) where {O
     
     # Choose model depending on power
     if power == 1
-        error("FW computation not yet implemeneted")
+        error("Fermat-Weber computation not yet implemeneted")
     end
 
     model = Model(Opt)
     
-    # suppress printing
     set_silent(model)
 
     @variable(model, x[1:dim])

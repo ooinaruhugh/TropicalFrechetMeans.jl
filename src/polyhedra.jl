@@ -8,7 +8,6 @@ using Clarabel, CDDLib
 Find the set of polyhedral Fréchet means of a given sample.
 The rows of `alphas` are the facet normals scaled to α⋅x = 1.
 `power` gives the exponent of the distance before taking the sum.
-`rep` is either "vrep" or "hrep" -- returning either vertices or halfspaces.
 """
 function polyhedral_frechet_set(::Type{Opt}, lib::Lib, sample, alphas; power=2, tol=1e-3) where {
     Opt<:MathOptInterface.AbstractOptimizer,
@@ -23,12 +22,16 @@ function polyhedral_frechet_set(::Type{Opt}, lib::Lib, sample, alphas; power=2, 
     end
     @debug "Frechet mean found: $(FM)"
 
-    B = map(sample) do pt 
-        d = polyhedral_distance(FM, pt, alphas)
-        polyhedral_ball(lib, pt, alphas, d)
+    b = foldl(sample; init=fill(Inf, size(alphas, 1))) do acc,pt
+      r = polyhedral_distance(FM, pt, alphas)
+      min.(acc,r .+ alphas * pt)
+    end
+
+    if tol > 0
+      b = rationalize.(b; tol=tol)
     end
     
-    return intersect(B...)
+    return polyhedron(hrep(alphas, b), lib)
 end
 function polyhedral_frechet_set(::Type{Opt}, sample::Vector{Vector{T}}, alphas::Matrix{T}; power=2, rep=:polyhedron, tol=1e-3) where {
     Opt<:MathOptInterface.AbstractOptimizer, 
@@ -49,10 +52,13 @@ end
 polyhedral_frechet_set(sample, alphas; power=2, tol=1e-3) = polyhedral_frechet_set(CDDLib.Library(:exact), sample, alphas; power=power, tol=tol)
 
 
+function polyhedral_ball(center, alphas, radius::T) where {T<:Real}
+  return zip(alphas, radius .+ alphas * center)
+end
 function polyhedral_ball(lib::Lib, center, alphas, radius::T) where {T<:Real, Lib<:Polyhedra.Library}
-    b = radius .+ alphas * center
+  b = polyhedral_ball(center, alphas, radius)
 
-    return polyhedron(hrep(alphas, b), lib)
+  return polyhedron(hrep(alphas, b), lib)
 end
 
 
@@ -84,17 +90,25 @@ function tropical_frechet_set(::Type{Opt}, lib::Lib, sample::Vector{Vector{T}}; 
     return polyhedron(hrep(alphas, b), lib)
 end
 
+function tropical_frechet_set(::Type{Opt}, lib::Lib, sample::Vector{Vector{T}}; power=2, tol=1e-3) where {
+    Opt<:MathOptInterface.AbstractOptimizer, Lib<:Polyhedra.Library, T<:Real
+}
+  alphas = tropical_ball_facets(n)
+
+  return polyhedral_frechet_set(Opt, lib, sample, alphas; power=power, tol=tol)
+end
+
 function tropical_frechet_set(::Type{Opt}, sample::Vector{Vector{T}}; power=2, tol=1e-3) where {
     Opt<:MathOptInterface.AbstractOptimizer, T<:Real
 }
-    n = length(sample[1])
-    lib = default_library(n, T)
-    return tropical_frechet_set(Opt, lib, sample; power=power, tol=tol)
+  alphas = tropical_ball_facets(n)
+  lib = default_library(n, T)
+  return polyhedral_frechet_set(Opt, lib, sample, alphas; power=power, tol=tol)
 end
 function tropical_frechet_set(lib::Lib, sample::Vector{Vector{T}}; power=2, tol=1e-3) where {
     Lib<:Polyhedra.Library, T<:Real
 }
-    return tropical_frechet_set(Clarabel.Optimizer, lib, sample; power=power, tol=tol) 
+    return tropical_frechet_set(Clarabel.Optimizer, lib, sample; power=power, tol=tol)
 end
 tropical_frechet_set(sample; power=2, tol=1e-3) = tropical_frechet_set(CDDLib.Library(:exact), sample; power=power, tol=tol)
 
