@@ -4,6 +4,25 @@ using JuMP
 using Polyhedra
 using Clarabel, CDDLib
 
+
+function polyhedral_ball(center, alphas, radius::T) where {T<:Real}
+    b = radius .+ alphas * center
+  
+    return polyhedron(hrep(alphas, b))
+end
+
+function polyhedral_ball(lib::Lib, center, alphas, radius::T) where {T<:Real, Lib<:Polyhedra.Library}
+    b = radius .+ alphas * center
+  
+    return polyhedron(hrep(alphas, b), lib)
+end    
+
+tropical_ball(lib::Lib, center::Vector{T}, radius::R) where {T<:Real, R<:Real, Lib<:Polyhedra.Library} =
+    polyhedral_ball(lib, center, tropical_ball_facets(T, length(center)), radius)
+tropical_ball(center::Vector{T}, radius::R) where {T<:Real, R<:Real} = tropical_ball(default_library(length(center), T), center, radius)
+
+
+
 """
 Find the set of polyhedral Fréchet means of a given sample.
 The rows of `alphas` are the facet normals scaled to α⋅x = 1.
@@ -24,7 +43,7 @@ function polyhedral_frechet_set(::Type{Opt}, lib::Lib, sample, alphas; power=2, 
 
     b = foldl(sample; init=fill(Inf, size(alphas, 1))) do acc,pt
       r = polyhedral_distance(FM, pt, alphas)
-      min.(acc,r .+ alphas * pt)
+      min.(acc, r .+ alphas * pt)
     end
 
     if tol > 0
@@ -46,20 +65,11 @@ function polyhedral_frechet_set(lib::Lib, sample, alphas; power=2, tol=1e-3) whe
     Lib<:Polyhedra.Library
 }
     H = polyhedral_frechet_set(Clarabel.Optimizer, lib, sample, alphas; power=power, tol=tol) |> hrep
-    redH = removehredundancy(H, Clarabel.Optimizer)
+    
+    redH = removehredundancy(H, () -> Clarabel.Optimizer(verbose=false))
     return polyhedron(redH, lib)
 end
 polyhedral_frechet_set(sample, alphas; power=2, tol=1e-3) = polyhedral_frechet_set(CDDLib.Library(:exact), sample, alphas; power=power, tol=tol)
-
-
-function polyhedral_ball(center, alphas, radius::T) where {T<:Real}
-  return zip(alphas, radius .+ alphas * center)
-end
-function polyhedral_ball(lib::Lib, center, alphas, radius::T) where {T<:Real, Lib<:Polyhedra.Library}
-  b = polyhedral_ball(center, alphas, radius)
-
-  return polyhedron(hrep(alphas, b), lib)
-end
 
 
 """
@@ -90,7 +100,10 @@ function tropical_frechet_set(lib::Lib, sample::Vector{Vector{T}}; power=2, tol=
 }
     return tropical_frechet_set(Clarabel.Optimizer, lib, sample; power=power, tol=tol)
 end
-tropical_frechet_set(sample; power=2, tol=1e-3) = tropical_frechet_set(CDDLib.Library(:exact), sample; power=power, tol=tol)
+function tropical_frechet_set(sample; power=2, tol=1e-3)
+    alphas = tropical_ball_facets(length(sample |> first))
+    return polyhedral_frechet_set(sample, alphas; power=power, tol=tol)
+end
 
 function tropical_remove_redundant_halfspaces!(P::Polyhedron{T}) where T<:Real
     H = hrep(P)
@@ -112,7 +125,3 @@ function tropical_remove_redundant_halfspaces!(P::Polyhedron{T}) where T<:Real
 
     return polyhedron(Hnew, library(P))
 end
-
-tropical_ball(lib::Lib, center::Vector{T}, radius::R) where {T<:Real, R<:Real, Lib<:Polyhedra.Library} =
-    polyhedral_ball(lib, center, tropical_ball_facets(T, length(center)), radius)
-tropical_ball(center::Vector{T}, radius::R) where {T<:Real, R<:Real} = tropical_ball(default_library(length(center), T), center, radius)
