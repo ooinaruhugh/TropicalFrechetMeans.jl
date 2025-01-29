@@ -4,9 +4,9 @@ authors = ["Kamillo Ferry <kafe@kafe.dev>"]
 version = "0.1.0"
 
 [deps]
+CDDLib = "3391f64e-dcde-5f30-b752-e11513730f60"
+Clarabel = "61c947e1-3e6d-4ee4-985a-eec8c727bd6e"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 Polyhedra = "67491407-f73d-577b-9b50-8179a7c68029"
-Clarabel = "61c947e1-3e6d-4ee4-985a-eec8c727bd6e"
-CDDLib = "3391f64e-dcde-5f30-b752-e11513730f60"
