@@ -73,9 +73,9 @@ end
 function tropical_frechet_set(::Type{Opt}, sample::Vector{Vector{T}}; power=2, tol=1e-3) where {
     Opt<:MathOptInterface.AbstractOptimizer, T<:Real
 }
-  alphas = tropical_ball_facets(n)
+  n = length(sample |> first)
   lib = default_library(n, T)
-  return polyhedral_frechet_set(Opt, lib, sample, alphas; power=power, tol=tol)
+  return tropical_frechet_set(Opt, lib, sample; power=power, tol=tol)
 end
 
 function tropical_remove_redundant_halfspaces!(P::Polyhedron{T}) where T<:Real
