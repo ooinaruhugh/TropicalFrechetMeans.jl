@@ -20,7 +20,6 @@ tropical_ball(lib::Lib, center::Vector{T}, radius::R) where {T<:Real, R<:Real, L
 tropical_ball(center::Vector{T}, radius::R) where {T<:Real, R<:Real} = tropical_ball(default_library(length(center), T), center, radius)
 
 
-
 """
 Find the set of polyhedral Fréchet means of a given sample.
 The rows of `alphas` are the facet normals scaled to α⋅x = 1.
@@ -30,13 +29,7 @@ function polyhedral_frechet_set(::Type{Opt}, lib::Lib, sample, alphas; power=2, 
     Opt<:MathOptInterface.AbstractOptimizer,
     Lib<:Polyhedra.Library
 }
-    FM = if tol > 0 
-        sample = map(sample) do pt; rationalize.(pt; tol=tol) end
-        pt = polyhedral_frechet_mean(Opt, sample, alphas; power=power)
-        rationalize.(pt; tol=tol)
-    else 
-        polyhedral_frechet_mean(Opt, sample, alphas; power=power)
-    end
+    FM = polyhedral_frechet_mean(Opt, sample, alphas; power=power, tol=tol)
     @debug "Frechet mean found: $(FM)"
 
     b = foldl(sample; init=fill(Inf, size(alphas, 1))) do acc,pt

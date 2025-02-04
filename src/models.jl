@@ -41,7 +41,10 @@ Find one polyhedral Fréchet mean of a given sample.
 The rows of `alphas` are the facet normals of the unit ball for the polyhedral distance.
 `power` gives the exponent of the distance before taking the sum.
 """
-function polyhedral_frechet_mean(::Type{Opt}, sample, alphas; power=2) where {Opt<:MathOptInterface.AbstractOptimizer}
+function polyhedral_frechet_mean(::Type{Opt}, sample, alphas; power=2, tol=1e-3) where {Opt<:MathOptInterface.AbstractOptimizer}
+    if tol > 0 
+        sample = map(sample) do pt; rationalize.(pt; tol=tol) end
+    end
     model, x = polyhedral_frechet_model(Opt, sample, alphas, power=power)
     
     @debug "\nOptimising..."
@@ -49,9 +52,12 @@ function polyhedral_frechet_mean(::Type{Opt}, sample, alphas; power=2) where {Op
     optimize!(model)
     minimiser = value.(x)
     
-    return minimiser
+    if tol > 0 
+        return rationalize.(minimiser; tol=tol)
+    else 
+        return minimiser
+    end
 end
-polyhedral_frechet_mean(sample, alphas; power=2) = polyhedral_frechet_mean(Clarabel.Optimizer, sample, alphas; power=power)
 
 """
     tropical_frechet_model(::Type{Opt}, sample; power=2) where {Opt<:MathOptInterface.AbstractOptimizer}
@@ -72,7 +78,10 @@ Find one polyhedral Fréchet mean of a given sample.
 The rows of `alphas` are the facet normals scaled to α⋅x = 1.
 `power` gives the exponent of the distance before taking the sum.
 """
-function tropical_frechet_mean(::Type{Opt}, sample; power=2) where {Opt<:MathOptInterface.AbstractOptimizer}
+function tropical_frechet_mean(::Type{Opt}, sample; power=2, tol=1e-3) where {Opt<:MathOptInterface.AbstractOptimizer}
+    if tol > 0 
+        sample = map(sample) do pt; rationalize.(pt; tol=tol) end
+    end
     model, x = tropical_frechet_model(Opt, sample; power=power)
     
     @debug "\nOptimising..."
@@ -80,7 +89,11 @@ function tropical_frechet_mean(::Type{Opt}, sample; power=2) where {Opt<:MathOpt
     optimize!(model)
     minimiser = value.(x)
     
-    return minimiser
+    if tol > 0 
+        return rationalize.(minimiser; tol=tol)
+    else 
+        return minimiser
+    end
 end
 
 function conjugate_gradients(sample)
