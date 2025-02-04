@@ -1,4 +1,4 @@
-using MathOptInterface, JuMP, Clarabel
+using MathOptInterface, JuMP
 
 """
     polyhedral_frechet_model(::Type{Opt}, sample, alphas; power=2) where {Opt<:MathOptInterface.AbstractOptimizer}
@@ -33,7 +33,6 @@ function polyhedral_frechet_model(::Type{Opt}, sample, alphas; power=2) where {O
 
     return model, x
 end
-polyhedral_frechet_model(sample, alphas; power=2) = polyhedral_frechet_model(Clarabel.Optimizer, sample, alphas; power=power)
 
 """
     polyhedral_frechet_mean(::Type{Opt}, sample, alphas; power=2) where {Opt<:MathOptInterface.AbstractOptimizer}
@@ -83,4 +82,30 @@ function tropical_frechet_mean(::Type{Opt}, sample; power=2) where {Opt<:MathOpt
     
     return minimiser
 end
-tropical_frechet_mean(sample; power=2) = tropical_frechet_mean(Clarabel.Optimizer, sample; power=power) 
+
+function conjugate_gradients(sample)
+    alphas = tropical_ball_facets(length(sample[1])) |> transpose
+    δ = x-> 2//(x+2)
+
+    v = sum(sample) // length(sample)
+    S = sum_of_trop_dist(v, sample; power=2)
+
+    k=1
+    while true
+        g = alphas .+ δ(k)*v
+        newS = [sum_of_trop_dist(g[:,k], sample; power=2) for k in axes(g, 2)]
+        println(v, δ(k))
+        println(g |> transpose)
+
+        i = findfirst(newS .< S)
+        if isnothing(i)
+            break
+        else
+            S = newS[i]
+            v = g[:,i]
+            k += 1
+        end
+    end 
+
+    return v
+end
