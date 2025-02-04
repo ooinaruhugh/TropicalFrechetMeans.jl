@@ -27,7 +27,7 @@ Calculate the sum of polyhedral distances between `ref` and the points in `sampl
 The rows of `alphas` are the facet normals of the corresponding unit ball.
 `power` gives the exponent of the distance before taking the sum.
 """
-function sum_of_poly_dist(ref, sample, alphas; power=1)
+function sum_of_poly_dist(ref, sample, alphas; power=2)
     return sum(polyhedral_distance(ref, s, alphas)^power for s in sample)
 end
 
@@ -36,7 +36,7 @@ end
 
 Calculate the sum of tropical distances between `ref` and the points in `sample`.
 """
-function sum_of_trop_dist(ref, sample; power=1)
+function sum_of_trop_dist(ref, sample; power=2)
     return sum([tropical_distance(pt, ref)^power for pt in sample])
 end
 
