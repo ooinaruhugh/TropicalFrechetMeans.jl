@@ -1,5 +1,8 @@
 using LinearAlgebra
 using Polyhedra
+
+using CDDLib, Clarabel
+
 using TropicalFrechetMeans
 
 using JSON3
