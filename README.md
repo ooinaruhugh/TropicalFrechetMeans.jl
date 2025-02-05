@@ -1,9 +1,5 @@
 # Tropical Fréchet Means
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11065978.svg)](https://doi.org/10.5281/zenodo.11065978)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://ooinaruhugh.github.io/TropicalFrechetMeans.jl/dev)
-[![CI](https://github.com/ooinaruhugh/GroebnerWalk.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ooinaruhugh/GroebnerWalk.jl/actions/workflows/CI.yml)
-
 TropicalFrechetMeans.jl is a Julia package providing algorithms to compute Tropical Fréchet means for a dataset.
 This is the accompanying code to [link to arxiv].
 
@@ -31,7 +27,7 @@ tropical_frechet_mean(sample)
 ```
 
 Calculating the entire Fréchet mean polytrope, one needs additionally an library for polyhedral computations implementing the interface of 
-[Polyhedra.jl](). One such example is the Julia version of [CDDLib]().
+[Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl). One such example is the Julia version of [CDDLib](https://github.com/JuliaPolyhedra/CDDLib.jl).
 
 Continuing above example, the corresponding Fréchet mean polytrope can be calculated in the following way.
 ```julia
@@ -42,9 +38,6 @@ P = tropical_frechet_set(sample)
 ```
 Due to the nature of the computations, this will output a facet description of the Fréchet mean polytrope.
 This can be converted to a vertex description, giving generators for all possible Fréchet means. 
-
-## Documentation 
-The documentation for the GroebnerWalk.jl package can be found at <https://ooinaruhugh.github.io/TropicalFrechetMeans.jl>
 
 ## Contacts
 The library is maintained by Kamillo Ferry (kafe (at) kafe (dot) dev).
