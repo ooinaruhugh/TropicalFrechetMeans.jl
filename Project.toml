@@ -18,3 +18,4 @@ Oscar = "f1435218-dba5-11e9-1e4d-f1a5fab5fc13"
 [extensions]
 ClarabelExt = "Clarabel"
 DefaultSolverExt = ["Clarabel", "CDDLib"]
+OscarExt = "Oscar"
