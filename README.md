@@ -1,7 +1,7 @@
 # Tropical Fréchet Means
 
 TropicalFrechetMeans.jl is a Julia package providing algorithms to compute Tropical Fréchet means for a dataset.
-This is the accompanying code to [link to arxiv].
+This is the accompanying code to "Tropical Fréchet Means" by B. Lin, K. Ferry, C. Améndola, A. Monod and R. Yoshida (forthcoming).
 
 ## Usage
 
