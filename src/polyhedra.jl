@@ -1,6 +1,5 @@
 using LinearAlgebra
-using MathOptInterface
-using JuMP
+using MathOptInterface, JuMP
 using Polyhedra
 
 function polyhedral_ball(center, alphas, radius::T) where {T<:Real}
@@ -97,4 +96,17 @@ function tropical_remove_redundant_halfspaces!(P::Polyhedron{T}) where T<:Real
     Hnew = hrep(hp, f)
 
     return polyhedron(Hnew, library(P))
+end
+
+function breakpoints_of_tropical_line(p,q)
+    r = q - p
+    σ = sortperm(r)
+
+    V = Vector{typeof(r)}(undef, length(r))
+
+    for k in 1:length(r)
+        V[k] = [q[σ[1:k]]..., r[σ[k]] .+ p[σ[k+1:end]]...][σ]
+    end
+    
+    return V
 end
